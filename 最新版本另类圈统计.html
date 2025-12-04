@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TT 另类圈</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "微软雅黑", Arial, sans-serif; }
+        body { background: #000; color: #fff; padding: 20px; line-height: 1.6; }
+        .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #333; }
+        .title { font-size: 28px; margin-bottom: 10px; letter-spacing: 1px; background: linear-gradient(90deg, #ffd700, #ff6b6b); -webkit-background-clip: text; background-clip: text; color: transparent; animation: breathe 3s ease-in-out infinite alternate; }
+        @keyframes breathe { from { opacity: 0.9; transform: scale(1); } to { opacity: 1; transform: scale(1.05); } }
+        .marquee-container { width: 100%; overflow: hidden; white-space: nowrap; background: rgba(255, 59, 48, 0.1); padding: 8px 0; border-radius: 4px; margin-bottom: 20px; }
+        .marquee-content { display: inline-block; animation: scroll 25s linear infinite; color: #ff3b30; font-size: 14px; }
+        @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+        .search-bar { display: flex; gap: 10px; margin-bottom: 25px; max-width: 500px; margin-left: auto; margin-right: auto; }
+        .search-input { flex: 1; padding: 10px 15px; border: 1px solid #444; border-radius: 20px; background: #111; color: #fff; font-size: 14px; outline: none; }
+        .search-input:focus { border-color: #ffd700; }
+        .search-btn { padding: 10px 20px; border: none; border-radius: 20px; background: #ffd700; color: #000; font-size: 14px; font-weight: bold; cursor: pointer; transition: background 0.3s; }
+        .search-btn:hover { background: #e6c200; }
+        .nav { display: flex; justify-content: center; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
+        .nav-btn { padding: 8px 18px; border: 1px solid #444; border-radius: 20px; background: #111; color: #fff; font-size: 14px; font-weight: bold; cursor: pointer; transition: all 0.3s; }
+        .nav-btn.active, .nav-btn:hover { background: #ffd700; color: #000; border-color: #ffd700; }
+        .content { display: none; max-width: 100%; margin: 0 auto; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .content.active { display: block; }
+        .section-title { font-size: 22px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid #333; display: flex; align-items: center; }
+        .section-title::before { content: ""; width: 4px; height: 20px; background: #ffd700; margin-right: 10px; }
+        .btn-add { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border: none; border-radius: 20px; background: #4CAF50; color: #fff; font-size: 14px; font-weight: bold; cursor: pointer; margin-bottom: 20px; transition: background 0.3s; }
+        .btn-add:disabled { background: #666; cursor: not-allowed; }
+        .btn-add:hover:not(:disabled) { background: #388E3C; }
+        .btn-add::before { content: "+"; font-size: 18px; }
+        .admin-btn { position: fixed; top: 15px; right: 15px; padding: 8px 16px; border: none; border-radius: 20px; background: #ff3b30; color: #fff; font-size: 14px; font-weight: bold; cursor: pointer; transition: background 0.3s; z-index: 100; }
+        .admin-btn:hover { background: #d32f2f; }
+        .master-card { background: #1a1a1a; border: 1px solid #ffd700; border-radius: 8px; padding: 15px; margin-bottom: 15px; transition: all 0.3s; position: relative; width: 100%; max-width: 500px; cursor: pointer; }
+        .member-card { background: #1a1a1a; border: 1px solid #444; border-radius: 8px; padding: 10px; transition: all 0.3s; position: relative; width: 100%; cursor: pointer; }
+        .master-card:hover { border-color: #ffd700; box-shadow: 0 5px 15px rgba(255, 215, 0, 0.1); }
+        .member-card:hover { border-color: #ff9500; box-shadow: 0 3px 10px rgba(255, 149, 0, 0.1); }
+        .members-container, .core-container, .public-container, .search-results-container { display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); gap: 8px; width: 100%; max-width: 500px; margin-bottom: 20px; }
+        .card-header { font-size: 16px; font-weight: bold; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+        .master-card .card-header { font-size: 18px; }
+        .card-role { font-size: 12px; color: #aaa; margin-bottom: 6px; }
+        .master-card .card-role { font-size: 14px; }
+        .delete-btn { position: absolute; top: 8px; right: 8px; background: #ff3b30; color: #fff; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.3s; z-index: 10; }
+        .master-card .delete-btn { width: 24px; height: 24px; font-size: 16px; }
+        .delete-btn:hover { background: #d32f2f; }
+        .delete-btn.hidden { display: none; }
+        .empty-state { text-align: center; padding: 40px 0; color: #666; font-size: 16px; }
+        .empty-state::after { content: "暂无数据"; display: block; margin-top: 10px; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); display: none; justify-content: center; align-items: center; z-index: 9999; padding: 20px; }
+        .modal.active { display: flex; }
+        .modal-content { background: #1a1a1a; border: 1px solid #444; border-radius: 8px; padding: 20px; width: 100%; max-width: 400px; }
+        .modal-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid #333; }
+        .modal-form { display: flex; flex-direction: column; gap: 12px; margin-bottom: 15px; }
+        .modal-input { padding: 10px; border: 1px solid #444; border-radius: 4px; background: #222; color: #fff; font-size: 14px; outline: none; }
+        .modal-input:focus { border-color: #ffd700; }
+        .modal-textarea { padding: 10px; border: 1px solid #444; border-radius: 4px; background: #222; color: #fff; font-size: 14px; outline: none; min-height: 150px; resize: vertical; }
+        .modal-textarea:focus { border-color: #ffd700; }
+        .modal-btn-group { display: flex; justify-content: flex-end; gap: 10px; }
+        .modal-btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; transition: background 0.3s; }
+        .btn-confirm { background: #4CAF50; color: #fff; }
+        .btn-confirm:hover { background: #388E3C; }
+        .btn-cancel { background: #666; color: #fff; }
+        .btn-cancel:hover { background: #444; }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.8); color: #fff; padding: 10px 20px; border-radius: 4px; font-size: 14px; z-index: 1000; display: none; }
+        .toast.active { display: block; }
+        .detail-card { background: #1a1a1a; border: 1px solid #444; border-radius: 8px; padding: 20px; margin-bottom: 20px; width: 100%; max-width: 500px; }
+        .detail-header { font-size: 22px; font-weight: bold; margin-bottom: 10px; }
+        .detail-role { font-size: 16px; color: #aaa; margin-bottom: 15px; }
+        .view-profile-btn { display: inline-block; padding: 10px 20px; background: #ffd700; color: #000; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; margin-bottom: 15px; transition: background 0.3s; }
+        .view-profile-btn:hover { background: #e6c200; }
+        .profile-content { display: none; }
+        .profile-content.active { display: block; }
+        .profile-section { margin-bottom: 15px; }
+        .profile-label { font-size: 14px; color: #aaa; margin-bottom: 5px; }
+        .profile-value { font-size: 16px; line-height: 1.6; }
+        .back-btn { display: inline-block; padding: 8px 16px; background: #333; color: #fff; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; margin-bottom: 20px; transition: background 0.3s; }
+        .back-btn:hover { background: #444; }
+        .search-results-header { font-size: 18px; margin-bottom: 15px; text-align: center; color: #ffd700; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="title">TT 另类圈</h1>
+        <div class="marquee-container">
+            <div class="marquee-content">禁止模仿，仅供娱乐，不代表任何人</div>
+        </div>
+    </div>
+
+    <div class="search-bar">
+        <input type="text" class="search-input" id="searchInput" placeholder="搜索姓名、角色或厂牌...">
+        <button class="search-btn" onclick="performSearch()">搜索</button>
+    </div>
+
+    <div class="nav">
+        <button class="nav-btn active" onclick="showTab('label')">厂牌管理</button>
+        <button class="nav-btn" onclick="showTab('core')">核心成员</button>
+        <button class="nav-btn" onclick="showTab('public')">公众人物</button>
+    </div>
+
+    <button class="admin-btn" id="adminBtn" onclick="openModal('adminModal')">管理员验证</button>
+
+    <div class="content active" id="label">
+        <h2 class="section-title">厂牌管理</h2>
+        <button class="btn-add" id="addLabelBtn" onclick="checkAdminAndOpen('addLabelModal')" disabled>添加厂牌</button>
+        <div id="labelList"></div>
+    </div>
+
+    <div class="content" id="labelDetail">
+        <h2 class="section-title" id="labelDetailTitle">厂牌详情</h2>
+        <button class="btn-add" id="addMemberBtn" onclick="checkAdminAndOpen('addMemberModal')" disabled>添加成员</button>
+        <div id="labelDetailContent"></div>
+    </div>
+
+    <div class="content" id="core">
+        <h2 class="section-title">核心成员</h2>
+        <button class="btn-add" id="addCoreBtn" onclick="checkAdminAndOpen('addCoreModal')" disabled>添加核心成员</button>
+        <div id="coreList"></div>
+    </div>
+
+    <div class="content" id="public">
+        <h2 class="section-title">公众人物</h2>
+        <button class="btn-add" id="addPublicBtn" onclick="checkAdminAndOpen('addPublicModal')" disabled>添加公众人物</button>
+        <div id="publicList"></div>
+    </div>
+
+    <div class="content" id="searchResults">
+        <h2 class="search-results-header" id="searchResultsHeader">搜索结果</h2>
+        <div class="search-results-container" id="searchResultsContainer"></div>
+    </div>
+
+    <div class="content" id="profileDetail">
+        <button class="back-btn" onclick="goBack()">返回</button>
+        <div class="detail-card" id="profileCard"></div>
+    </div>
+
+    <div class="modal" id="adminModal">
+        <div class="modal-content">
+            <h3 class="modal-title">管理员验证</h3>
+            <div class="modal-form">
+                <input type="password" class="modal-input" id="adminPwd" placeholder="请输入管理员密码">
+            </div>
+            <div class="modal-btn-group">
+                <button class="modal-btn btn-cancel" onclick="closeAllModals()">取消</button>
+                <button class="modal-btn btn-confirm" onclick="verifyAdmin()">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="addLabelModal">
+        <div class="modal-content">
+            <h3 class="modal-title">添加厂牌</h3>
+            <div class="modal-form">
+                <input type="text" class="modal-input" id="labelName" placeholder="厂牌名称" required>
+                <input type="text" class="modal-input" id="masterName" placeholder="主理人姓名" required>
+                <textarea class="modal-textarea" id="masterBio" placeholder="主理人简介"></textarea>
+                <textarea class="modal-textarea" id="labelIntro" placeholder="厂牌简介"></textarea>
+            </div>
+            <div class="modal-btn-group">
+                <button class="modal-btn btn-cancel" onclick="closeAllModals()">取消</button>
+                <button class="modal-btn btn-confirm" onclick="saveLabel()">确认添加</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="addMemberModal">
+        <div class="modal-content">
+            <h3 class="modal-title" id="addMemberTitle">添加成员</h3>
+            <input type="hidden" id="currentLabelId">
+            <div class="modal-form">
+                <input type="text" class="modal-input" id="memberName" placeholder="成员姓名" required>
+                <input type="text" class="modal-input" id="memberRole" placeholder="成员角色">
+                <textarea class="modal-textarea" id="memberBio" placeholder="成员简介"></textarea>
+            </div>
+            <div class="modal-btn-group">
+                <button class="modal-btn btn-cancel" onclick="closeAllModals()">取消</button>
+                <button class="modal-btn btn-confirm" onclick="saveMember()">确认添加</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="addCoreModal">
+        <div class="modal-content">
+            <h3 class="modal-title">添加核心成员</h3>
+            <div class="modal-form">
+                <input type="text" class="modal-input" id="coreName" placeholder="成员姓名" required>
+                <input type="text" class="modal-input" id="coreRole" placeholder="成员角色">
+                <textarea class="modal-textarea" id="coreBio" placeholder="成员简介"></textarea>
+            </div>
+            <div class="modal-btn-group">
+                <button class="modal-btn btn-cancel" onclick="closeAllModals()">取消</button>
+                <button class="modal-btn btn-confirm" onclick="saveCoreMember()">确认添加</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="addPublicModal">
+        <div class="modal-content">
+            <h3 class="modal-title">添加公众人物</h3>
+            <div class="modal-form">
+                <input type="text" class="modal-input" id="publicName" placeholder="人物姓名" required>
+                <input type="text" class="modal-input" id="publicTitle" placeholder="人物头衔">
+                <textarea class="modal-textarea" id="publicBio" placeholder="人物简介"></textarea>
+            </div>
+            <div class="modal-btn-group">
+                <button class="modal-btn btn-cancel" onclick="closeAllModals()">取消</button>
+                <button class="modal-btn btn-confirm" onclick="savePublicMember()">确认添加</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="confirmDeleteModal">
+        <div class="modal-content">
+            <h3 class="modal-title">确认删除</h3>
+            <p>确定要删除 <span id="deleteItemName"></span> 吗？</p>
+            <input type="hidden" id="deleteType">
+            <input type="hidden" id="deleteId">
+            <input type="hidden" id="deleteLabelId">
+            <div class="modal-btn-group">
+                <button class="modal-btn btn-cancel" onclick="closeAllModals()">取消</button>
+                <button class="modal-btn btn-confirm" onclick="confirmDelete()">确认删除</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const ADMIN_PWD = "20070308"; // 恢复你原有的管理员密码
+        let isAdmin = false;
+        let currentLabelId = null;
+        let currentProfile = null;
+        let lastActiveTab = 'label';
+
+        // 初始化数据（用localStorage，比Cookie更稳定）
+        function initData() {
+            const localStorageData = localStorage.getItem("tt_altcircle");
+            if (localStorageData) {
+                try { return JSON.parse(localStorageData); }
+                catch (e) { showToast("数据解析失败，将重置数据", "error"); return { labels: [], coreMembers: [], publicMembers: [] }; }
+            }
+            return { labels: [], coreMembers: [], publicMembers: [] };
+        }
+
+        let data = initData();
+
+        document.addEventListener("DOMContentLoaded", function() {
+            updateAdminUI();
+            renderLabelList();
+            renderCoreList();
+            renderPublicList();
+            // 监听搜索框回车事件
+            document.getElementById("searchInput").addEventListener("keypress", function(e) {
+                if (e.key === "Enter") performSearch();
+            });
+        });
+
+        function showTab(tab) {
+            lastActiveTab = tab;
+            document.querySelectorAll(".content").forEach(el => el.classList.remove("active"));
+            document.querySelectorAll(".nav-btn").forEach(el => el.classList.remove("active"));
+            document.getElementById(tab).classList.add("active");
+            document.querySelector(`.nav-btn[onclick="showTab('${tab}')"]`).classList.add("active");
+        }
+
+        function updateAdminUI() {
+            const addBtns = document.querySelectorAll(".btn-add");
+            const deleteBtns = document.querySelectorAll(".delete-btn");
+            
+            if (isAdmin) {
+                addBtns.forEach(btn => btn.disabled = false);
+                deleteBtns.forEach(btn => btn.classList.remove("hidden"));
+                document.getElementById("adminBtn").textContent = "退出登录";
+            } else {
+                addBtns.forEach(btn => btn.disabled = true);
+                deleteBtns.forEach(btn => btn.classList.add("hidden"));
+                document.getElementById("adminBtn").textContent = "管理员验证";
+            }
+        }
+
+        function checkAdminAndOpen(modalId) {
+            if (!isAdmin) { showToast("请先进行管理员验证"); openModal("adminModal"); return; }
+            openModal(modalId);
+        }
+
+        function openModal(modalId) { closeAllModals(); document.getElementById(modalId).classList.add("active"); }
+
+        function closeAllModals() {
+            document.querySelectorAll(".modal").forEach(el => el.classList.remove("active"));
+            document.querySelectorAll(".modal-input, .modal-textarea").forEach(input => {
+                if (input.type !== "hidden") input.value = "";
+            });
+        }
+
+        function showToast(message, type = "info") {
+            const toast = document.getElementById("toast");
+            toast.textContent = message;
+            toast.classList.add("active");
+            toast.style.backgroundColor = type === "error" ? "rgba(255, 59, 48, 0.8)" : "rgba(0, 0, 0, 0.8)";
+            setTimeout(() => { toast.classList.remove("active"); }, 2000);
+        }
+
+        function verifyAdmin() {
+            if (isAdmin) { isAdmin = false; showToast("已退出管理员登录"); }
+            else {
+                const pwd = document.getElementById("adminPwd").value;
+                if (pwd === ADMIN_PWD) { isAdmin = true; showToast("管理员验证成功！"); }
+                else { showToast("密码错误！", "error"); return; }
+            }
+            updateAdminUI();
+            closeAllModals();
+        }
+
+        function saveLabel() {
+            const name = document.getElementById("labelName").value.trim();
+            const masterName = document.getElementById("masterName").value.trim();
+            const masterBio = document.getElementById("masterBio").value.trim();
+            const intro = document.getElementById("labelIntro").value.trim();
+
+            if (!name || !masterName) { showToast("请填写厂牌名称和主理人姓名", "error"); return; }
+
+            const newLabel = {
+                id: Date.now().toString(),
+                name: name,
+                master: { name: masterName, bio: masterBio },
+                intro: intro,
+                members: []
+            };
+
+            data.labels.push(newLabel);
+            saveDataToLocalStorage();
+            showToast("厂牌添加成功");
+            closeAllModals();
+            renderLabelList();
+        }
+
+        function saveMember() {
+            const name = document.getElementById("memberName").value.trim();
+            const role = document.getElementById("memberRole").value.trim();
+            const bio = document.getElementById("memberBio").value.trim();
+
+            if (!currentLabelId) { showToast("请先进入一个厂牌的详情页", "error"); closeAllModals(); return; }
+            if (!name) { showToast("请填写成员姓名", "error"); return; }
+
+            const label = data.labels.find(l => l.id === currentLabelId);
+            if (!label) { showToast("厂牌不存在", "error"); return; }
+            if (!label.members) label.members = [];
+
+            const newMember = {
+                id: Date.now().toString(),
+                name: name,
+                role: role,
+                bio: bio
+            };
+
+            label.members.push(newMember);
+            saveDataToLocalStorage();
+            showToast("成员添加成功");
+            closeAllModals();
+            showLabelDetail(currentLabelId);
+        }
+
+        function saveCoreMember() {
+            const name = document.getElementById("coreName").value.trim();
+            const role = document.getElementById("coreRole").value.trim();
+            const bio = document.getElementById("coreBio").value.trim();
+
+            if (!name) { showToast("请填写成员姓名", "error"); return; }
+
+            const newMember = {
+                id: Date.now().toString(),
+                name: name,
+                role: role,
+                bio: bio
+            };
+
+            data.coreMembers.push(newMember);
+            saveDataToLocalStorage();
+            showToast("核心成员添加成功");
+            closeAllModals();
+            renderCoreList();
+        }
+
+        function savePublicMember() {
+            const name = document.getElementById("publicName").value.trim();
+            const title = document.getElementById("publicTitle").value.trim();
+            const bio = document.getElementById("publicBio").value.trim();
+
+            if (!name) { showToast("请填写人物姓名", "error"); return; }
+
+            const newMember = {
+                id: Date.now().toString(),
+                name: name,
+                title: title,
+                bio: bio
+            };
+
+            data.publicMembers.push(newMember);
+            saveDataToLocalStorage();
+            showToast("公众人物添加成功");
+            closeAllModals();
+            renderPublicList();
+        }
+
+        function showLabelDetail(labelId) {
+            currentLabelId = labelId;
+            const label = data.labels.find(l => l.id === labelId);
+            if (!label) return;
+
+            document.querySelectorAll(".content").forEach(el => el.classList.remove("active"));
+            document.getElementById("labelDetail").classList.add("active");
+            document.getElementById("labelDetailTitle").textContent = `${label.name} - 详情`;
+
+            const detailEl = document.getElementById("labelDetailContent");
+            let html = `
+                <div class="master-card" onclick="showProfile('master', '${label.id}')">
+                    <button class="delete-btn ${isAdmin ? '' : 'hidden'}" onclick="event.stopPropagation(); openDeleteModal('master', '${label.id}')">×</button>
+                    <div class="card-header">${label.master.name}</div>
+                    <div class="card-role">${label.name} 主理人</div>
+                </div>
+                <div class="members-container">
+            `;
+
+            if (label.members && label.members.length > 0) {
+                label.members.forEach(member => {
+                    html += `
+                        <div class="member-card" onclick="showProfile('member', '${label.id}', '${member.id}')">
+                            <button class="delete-btn ${isAdmin ? '' : 'hidden'}" onclick="event.stopPropagation(); openDeleteModal('member', '${label.id}', '${member.id}')">×</button>
+                            <div class="card-header">${member.name}</div>
+                            <div class="card-role">${member.role || "成员"}</div>
+                        </div>
+                    `;
+                });
+            } else {
+                html += '<div class="empty-state">暂无成员</div>';
+            }
+
+            html += '</div>';
+            detailEl.innerHTML = html;
+            updateAdminUI();
+        }
+
+        function showProfile(type, id1, id2) {
+            let title = "", role = "", bio = "", extraInfo = "";
+
+            if (type === "label") {
+                const label = data.labels.find(l => l.id === id1);
+                if (label) {
+                    title = label.name; role = "厂牌"; bio = label.intro;
+                    extraInfo = `<div class="profile-section"><div class="profile-label">主理人</div><div class="profile-value">${label.master.name}</div></div>`;
+                }
+            } else if (type === "master") {
+                const label = data.labels.find(l => l.id === id1);
+                if (label) { title = label.master.name; role = `${label.name} 主理人`; bio = label.master.bio; }
+            } else if (type === "member") {
+                const label = data.labels.find(l => l.id === id1);
+                const member = label.members.find(m => m.id === id2);
+                if (member) {
+                    title = member.name; role = member.role || "成员"; bio = member.bio;
+                    extraInfo = `<div class="profile-section"><div class="profile-label">所属厂牌</div><div class="profile-value">${label.name}</div></div>`;
+                }
+            } else if (type === "core") {
+                const member = data.coreMembers.find(m => m.id === id1);
+                if (member) { title = member.name; role = member.role || "核心成员"; bio = member.bio; }
+            } else if (type === "public") {
+                const member = data.publicMembers.find(m => m.id === id1);
+                if (member) { title = member.name; role = member.title || "公众人物"; bio = member.bio; }
+            }
+
+            currentProfile = { type, id1, id2 };
+
+            const profileCard = document.getElementById("profileCard");
+            profileCard.innerHTML = `
+                <div class="detail-header">${title}</div>
+                <div class="detail-role">${role}</div>
+                <button class="view-profile-btn" onclick="toggleProfileContent()">查看资料</button>
+                <div class="profile-content" id="profileContent">
+                    ${extraInfo}
+                    <div class="profile-section">
+                        <div class="profile-label">个人简介</div>
+                        <div class="profile-value">${bio || "暂无简介"}</div>
+                    </div>
+                </div>
+            `;
+
+            document.querySelectorAll(".content").forEach(el => el.classList.remove("active"));
+            document.getElementById("profileDetail").classList.add("active");
+        }
+
+        function toggleProfileContent() {
+            const content = document.getElementById("profileContent");
+            content.classList.toggle("active");
+            document.querySelector(".view-profile-btn").textContent = content.classList.contains("active") ? "收起资料" : "查看资料";
+        }
+
+        function goBack() {
+            document.querySelectorAll(".content").forEach(el => el.classList.remove("active"));
+            document.getElementById(lastActiveTab).classList.add("active");
+            if (lastActiveTab === 'labelDetail' && currentLabelId) showLabelDetail(currentLabelId);
+        }
+
+        function openDeleteModal(type, id1, id2) {
+            if (!isAdmin) { showToast("请先进行管理员验证", "error"); openModal("adminModal"); return; }
+
+            let itemName = "", deleteType = type, deleteId = id1, deleteLabelId = id1;
+
+            if (type === "label") { const label = data.labels.find(l => l.id === id1); itemName = label ? label.name : "厂牌"; }
+            else if (type === "master") { const label = data.labels.find(l => l.id === id1); itemName = label ? label.master.name : "主理人"; }
+            else if (type === "member") {
+                const label = data.labels.find(l => l.id === id1);
+                const member = label.members.find(m => m.id === id2);
+                itemName = member ? member.name : "成员"; deleteId = id2;
+            } else if (type === "core") { const member = data.coreMembers.find(m => m.id === id1); itemName = member ? member.name : "核心成员"; }
+            else if (type === "public") { const member = data.publicMembers.find(m => m.id === id1); itemName = member ? member.name : "公众人物"; }
+
+            document.getElementById("deleteItemName").textContent = itemName;
+            document.getElementById("deleteType").value = deleteType;
+            document.getElementById("deleteId").value = deleteId;
+            document.getElementById("deleteLabelId").value = deleteLabelId;
+
+            openModal("confirmDeleteModal");
+        }
+
+        function confirmDelete() {
+            const type = document.getElementById("deleteType").value;
+            const id = document.getElementById("deleteId").value;
+            const labelId = document.getElementById("deleteLabelId").value;
+
+            try {
+                if (type === "label") { data.labels = data.labels.filter(l => l.id !== id); if (currentLabelId === id) currentLabelId = null; }
+                else if (type === "master") { const label = data.labels.find(l => l.id === labelId); if (label) label.master = { name: "未设置", bio: "" }; }
+                else if (type === "member") {
+                    const label = data.labels.find(l => l.id === labelId);
+                    if (label && label.members) label.members = label.members.filter(m => m.id !== id);
+                } else if (type === "core") { data.coreMembers = data.coreMembers.filter(m => m.id !== id); }
+                else if (type === "public") { data.publicMembers = data.publicMembers.filter(m => m.id !== id); }
+
+                saveDataToLocalStorage();
+                showToast("删除成功");
+                closeAllModals();
+
+                if (type === "label" || type === "master" || type === "member") {
+                    renderLabelList();
+                    if (labelId) showLabelDetail(labelId);
+                } else if (type === "core") renderCoreList();
+                else if (type === "public") renderPublicList();
+            } catch (e) { showToast("删除失败: " + e.message, "error"); }
+        }
+
+        // 保存数据到localStorage（替代Cookie，更稳定）
+        function saveDataToLocalStorage() {
+            try { localStorage.setItem("tt_altcircle", JSON.stringify(data)); }
+            catch (e) { showToast("保存失败: 数据过大或格式错误", "error"); console.error("LocalStorage save error:", e); }
+        }
+
+        function renderLabelList() {
+            const listEl = document.getElementById("labelList");
+            if (data.labels.length === 0) { listEl.innerHTML = '<div class="empty-state">暂无厂牌</div>'; return; }
+
+            let html = "";
+            data.labels.forEach(label => {
+                html += `
+                    <div class="master-card" onclick="showLabelDetail('${label.id}')">
+                        <button class="delete-btn ${isAdmin ? '' : 'hidden'}" onclick="event.stopPropagation(); openDeleteModal('label', '${label.id}')">×</button>
+                        <div class="card-header">${label.name}</div>
+                        <div class="card-role">主理人: ${label.master.name}</div>
+                    </div>
+                `;
+            });
+            listEl.innerHTML = html;
+            updateAdminUI();
+        }
+
+        function renderCoreList() {
+            const listEl = document.getElementById("coreList");
+            if (data.coreMembers.length === 0) { listEl.innerHTML = '<div class="empty-state">暂无核心成员</div>'; return; }
+
+            let html = '<div class="core-container">';
+            data.coreMembers.forEach(member => {
+                html += `
+                    <div class="member-card" onclick="showProfile('core', '${member.id}')">
+                        <button class="delete-btn ${isAdmin ? '' : 'hidden'}" onclick="event.stopPropagation(); openDeleteModal('core', '${member.id}')">×</button>
+                        <div class="card-header">${member.name}</div>
+                        <div class="card-role">${member.role || "核心成员"}</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            listEl.innerHTML = html;
+            updateAdminUI();
+        }
+
+        function renderPublicList() {
+            const listEl = document.getElementById("publicList");
+            if (data.publicMembers.length === 0) { listEl.innerHTML = '<div class="empty-state">暂无公众人物</div>'; return; }
+
+            let html = '<div class="public-container">';
+            data.publicMembers.forEach(member => {
+                html += `
+                    <div class="member-card" onclick="showProfile('public', '${member.id}')">
+                        <button class="delete-btn ${isAdmin ? '' : 'hidden'}" onclick="event.stopPropagation(); openDeleteModal('public', '${member.id}')">×</button>
+                        <div class="card-header">${member.name}</div>
+                        <div class="card-role">${member.title || "公众人物"}</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            listEl.innerHTML = html;
+            updateAdminUI();
+        }
+
+        // 搜索功能
+        function performSearch() {
+            const query = document.getElementById("searchInput").value.trim().toLowerCase();
+            if (!query) { showToast("请输入搜索内容", "error"); return; }
+
+            const results = [];
+
+            // 搜索厂牌
+            data.labels.forEach(label => {
+                if (label.name.toLowerCase().includes(query) || 
+                    label.master.name.toLowerCase().includes(query)) {
+                    results.push({
+                        type: "label",
+                        id: label.id,
+                        name: label.name,
+                        role: "厂牌",
+                        subtext: `主理人: ${label.master.name}`
+                    });
+                }
+            });
+
+            // 搜索主理人
+            data.labels.forEach(label => {
+                if (label.master.name.toLowerCase().includes(query)) {
+                    results.push({
+                        type: "master",
+                        id: label.id,
+                        name: label.master.name,
+                        role: `${label.name} 主理人`
+                    });
+                }
+            });
+
+            // 搜索厂牌成员
+            data.labels.forEach(label => {
+                label.members.forEach(member => {
+                    if (member.name.toLowerCase().includes(query) || 
+                        (member.role && member.role.toLowerCase().includes(query))) {
+                        results.push({
+                            type: "member",
+                            labelId: label.id,
+                            id: member.id,
+                            name: member.name,
+                            role: member.role || "成员",
+                            subtext: `所属厂牌: ${label.name}`
+                        });
+                    }
+                });
+            });
+
+            // 搜索核心成员
+            data.coreMembers.forEach(member => {
+                if (member.name.toLowerCase().includes(query) || 
+                    (member.role && member.role.toLowerCase().includes(query))) {
+                    results.push({
+                        type: "core",
+                        id: member.id,
+                        name: member.name,
+                        role: member.role || "核心成员"
+                    });
+                }
+            });
+
+            // 搜索公众人物
+            data.publicMembers.forEach(member => {
+                if (member.name.toLowerCase().includes(query) || 
+                    (member.title && member.title.toLowerCase().includes(query))) {
+                    results.push({
+                        type: "public",
+                        id: member.id,
+                        name: member.name,
+                        role: member.title || "公众人物"
+                    });
+                }
+            });
+
+            // 显示结果
+            const resultsContainer = document.getElementById("searchResultsContainer");
+            const resultsHeader = document.getElementById("searchResultsHeader");
+            resultsHeader.textContent = `搜索结果: ${results.length} 项`;
+
+            if (results.length === 0) {
+                resultsContainer.innerHTML = '<div class="empty-state">未找到匹配结果</div>';
+            } else {
+                let html = "";
+                results.forEach(item => {
+                    let onclick = "";
+                    let deleteBtn = "";
+
+                    if (item.type === "label") {
+                        onclick = `onclick="showLabelDetail('${item.id}')"`;
+                        deleteBtn = `<button class="delete-btn ${isAdmin ? '' : 'hidden'}" onclick="event.stopPropagation(); openDeleteModal('label', '${item.id}')">×</button>`;
+                    } else if (item.type === "master") {
+                        onclick = `onclick="showProfile('master', '${item.id}')"`;
+                        deleteBtn = `<button class="delete-btn ${isAdmin ? '' : 'hidden'}" onclick="event.stopPropagation(); openDeleteModal('master', '${item.id}')">×</button>`;
+                    } else if (item.type === "member") {
+                        onclick = `onclick="showProfile('member', '${item.labelId}', '${item.id}')"`;
+                        deleteBtn = `<button class="delete-btn ${isAdmin ? '' : 'hidden'}" onclick="event.stopPropagation(); openDeleteModal('member', '${item.labelId}', '${item.id}')">×</button>`;
+                    } else if (item.type === "core") {
+                        onclick = `onclick="showProfile('core', '${item.id}')"`;
+                        deleteBtn = `<button class="delete-btn ${isAdmin ? '' : 'hidden'}" onclick="event.stopPropagation(); openDeleteModal('core', '${item.id}')">×</button>`;
+                    } else if (item.type === "public") {
+                        onclick = `onclick="showProfile('public', '${item.id}')"`;
+                        deleteBtn = `<button class="delete-btn ${isAdmin ? '' : 'hidden'}" onclick="event.stopPropagation(); openDeleteModal('public', '${item.id}')">×</button>`;
+                    }
+
+                    html += `
+                        <div class="member-card" ${onclick}>
+                            ${deleteBtn}
+                            <div class="card-header">${item.name}</div>
+                            <div class="card-role">${item.role}</div>
+                            ${item.subtext ? `<div class="card-role">${item.subtext}</div>` : ''}
+                        </div>
+                    `;
+                });
+                resultsContainer.innerHTML = html;
+            }
+
+            // 切换到搜索结果页面
+            showTab("searchResults");
+            lastActiveTab = "searchResults";
+        }
+    </script>
+</body>
+</html>
